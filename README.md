@@ -1,0 +1,2 @@
+# rootme_LinKern_backup
+rootme部分内核题目备份
