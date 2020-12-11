@@ -1,0 +1,32 @@
+#!/bin/bash -p
+
+PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+CHALLPATH=/challenge/app-systeme/ch39
+
+STTY=$(stty -g)
+stty intr ^-
+
+TEMP=$(mktemp -d)
+chgrp app-systeme-ch39 ${TEMP}
+chmod 770 ${TEMP}
+
+echo ""
+echo "A share will be available: host:${TEMP} -> guest:/mnt/share"
+echo "Launching the vulnerable machine..."
+echo ""
+
+qemu-system-x86_64 \
+    -m 32M \
+    -cpu kvm64,+smep,check \
+    -nographic \
+    -kernel $CHALLPATH/bzImage \
+    -append 'console=ttyS0 loglevel=3 oops=panic panic=1' \
+    -monitor /dev/null \
+    -initrd $CHALLPATH/initramfs.img \
+    -snapshot \
+    -hda $CHALLPATH/passwd.img \
+    -fsdev local,id=exp1,path=${TEMP},security_model=mapped -device virtio-9p-pci,fsdev=exp1,mount_tag=rootme
+
+rm -rf "${TEMP}" 2> /dev/null
+stty "${STTY}"
+
